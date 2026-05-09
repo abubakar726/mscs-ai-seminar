@@ -7,7 +7,7 @@ export default function useTranscription({
   speakerName,
   speakerRole,
   sessionId
-}) {
+}) { 
   const recognitionRef = useRef(null);
   const shouldRecognizeRef = useRef(enabled);
   const activeInstanceRef = useRef(false);
