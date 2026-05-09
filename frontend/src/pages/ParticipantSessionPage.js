@@ -105,7 +105,7 @@ export default function ParticipantSessionPage() {
     if (!participant) return;
     const p = participant;
 
-    const socket = io(SOCKET_URL, { transports: ['polling', 'websocket'], upgrade: true });
+    const socket = io(SOCKET_URL, { transports: ['polling', 'websocket'], upgrade: true, extraHeaders: { 'bypass-tunnel-reminder': 'true' } });
     socketRef.current = socket;
 
     socket.on('connect', () => {

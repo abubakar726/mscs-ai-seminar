@@ -62,7 +62,9 @@ export default function PresenterSessionPage() {
 
   // Socket connection
   useEffect(() => {
-    const socket = io(SOCKET_URL);
+    const socket = io(SOCKET_URL, {
+      extraHeaders: { 'bypass-tunnel-reminder': 'true' },
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => {
