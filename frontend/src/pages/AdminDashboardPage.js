@@ -9,6 +9,7 @@ export default function AdminDashboardPage() {
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState('');
   
   // Expanded Org state for viewing presenters

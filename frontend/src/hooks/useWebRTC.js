@@ -62,7 +62,6 @@ export function useStudentWebRTC() {
 // ─── PRESENTER ────────────────────────────────────────────
 export function usePresenterWebRTC() {
   const peersRef = useRef({});
-  const selfAudioRef = useRef(null);
   const selfStreamRef = useRef(null);
   const wasAutoMutedRef = useRef(false);
   const [remoteStream, setRemoteStream] = useState(null);

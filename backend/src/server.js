@@ -23,14 +23,29 @@ const io = new Server(server, {
   transports: ['polling', 'websocket'],
 });
 
-// Ngrok warning bypass
+// Bypass localtunnel & ngrok browser warning pages
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', 'true');
+  res.setHeader('bypass-tunnel-reminder', 'true');
   next();
 });
 
-// CORS — sab allow
-app.use(cors({ origin: '*' }));
+// CORS — allow Vercel frontend and localhost
+const allowedOrigins = [
+  'http://localhost:3000',
+  /\.vercel\.app$/,
+  /\.loca\.lt$/,
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const allowed = allowedOrigins.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    callback(null, allowed ? origin : false);
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
