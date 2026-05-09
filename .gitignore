@@ -1,0 +1,12 @@
+# Root gitignore
+node_modules/
+.env
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build output
+build/
+dist/
