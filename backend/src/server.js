@@ -23,29 +23,25 @@ const io = new Server(server, {
   transports: ['polling', 'websocket'],
 });
 
-// Bypass localtunnel & ngrok browser warning pages
+// 1. CORS FIRST — allow everything to fix preflight issues
+app.use(cors({ 
+  origin: true, // reflect origin
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'bypass-tunnel-reminder', 'ngrok-skip-browser-warning']
+}));
+
+// 2. Bypass localtunnel & ngrok browser warning pages
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', 'true');
   res.setHeader('bypass-tunnel-reminder', 'true');
+  
+  // Handle preflight specifically just in case
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   next();
 });
 
-// CORS — allow Vercel frontend and localhost
-const allowedOrigins = [
-  'http://localhost:3000',
-  /\.vercel\.app$/,
-  /\.loca\.lt$/,
-];
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const allowed = allowedOrigins.some(o =>
-      typeof o === 'string' ? o === origin : o.test(origin)
-    );
-    callback(null, allowed ? origin : false);
-  },
-  credentials: true
-}));
 app.use(express.json());
 
 // Routes
@@ -78,8 +74,13 @@ const { spawn } = require('child_process');
 
 let whisperProcess = null;
 
-// Start persistent Python Whisper server
+// Start persistent Python Whisper server (Only if enabled)
 function startWhisperDaemon() {
+  if (process.env.ENABLE_WHISPER !== 'true') {
+    console.log('Whisper AI Daemon is disabled (ENABLE_WHISPER is not true). Skipping...');
+    return;
+  }
+
   const pythonPath = 'python';
   const scriptPath = path.join(__dirname, 'utils/whisper_server.py');
   
