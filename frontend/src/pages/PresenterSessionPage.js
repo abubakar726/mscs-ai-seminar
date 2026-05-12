@@ -636,12 +636,6 @@ export default function PresenterSessionPage() {
             {/* Headless Remote Transcriber for Student audio streams */}
             {activeSpeaker && remoteStream && (
               <>
-                <audio
-                  autoPlay
-                  playsInline
-                  ref={el => { if (el && el.srcObject !== remoteStream) el.srcObject = remoteStream; }}
-                  style={{ display: 'none' }}
-                />
                 <RemoteTranscriber
                   stream={remoteStream}
                   speakerName={activeSpeaker.participantName}

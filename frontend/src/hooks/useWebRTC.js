@@ -174,19 +174,26 @@ export function usePresenterWebRTC() {
             }
           }
 
-          // Route peer audio to the mixed stream (for recording only)
-          if (audioContextRef.current && mixedDestRef.current) {
-            try {
-              if (audioContextRef.current.state === 'suspended') {
-                audioContextRef.current.resume();
+              // Route peer audio to the mixed stream (for recording only)
+              if (audioContextRef.current && mixedDestRef.current) {
+                try {
+                  if (audioContextRef.current.state === 'suspended') {
+                    audioContextRef.current.resume();
+                  }
+                  const peerSource = audioContextRef.current.createMediaStreamSource(stream);
+                  
+                  // 1. Route to mixed stream for recording
+                  peerSource.connect(mixedDestRef.current);
+                  
+                  // 2. Route directly to laptop speakers for ultra-low latency PA output
+                  // This is the key fix for the delay!
+                  peerSource.connect(audioContextRef.current.destination);
+                  
+                  peerSourcesRef.current[from] = peerSource;
+                } catch(err) {
+                  console.error('Audio mix error:', err);
+                }
               }
-              const peerSource = audioContextRef.current.createMediaStreamSource(stream);
-              peerSource.connect(mixedDestRef.current);
-              peerSourcesRef.current[from] = peerSource;
-            } catch(err) {
-              console.error('Audio mix error:', err);
-            }
-          }
         };
 
         pc.onicecandidate = (ev) => {
