@@ -56,7 +56,11 @@ const joinSession = async (req, res) => {
         return res.status(401).json({ message: 'QR code session expired. Please scan again.' });
       }
     } else if (sessionCode) {
-      return res.status(403).json({ message: 'Manual session code entry is disabled. Please scan the QR code to join.' });
+      // Manual join via code
+      session = await Session.findOne({ sessionCode: sessionCode.toUpperCase(), status: { $ne: 'ended' } });
+      if (!session) {
+        return res.status(404).json({ message: 'Session not found or already ended.' });
+      }
     } else {
       return res.status(400).json({ message: 'Valid token required to join' });
     }

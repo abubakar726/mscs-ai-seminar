@@ -36,6 +36,8 @@ export default function PresenterSessionPage() {
   // Recording State
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
+  // QR Modal State
+  const [showQrModal, setShowQrModal] = useState(false);
   const recordedChunksRef = useRef([]);
 
   // Load session
@@ -95,7 +97,7 @@ export default function PresenterSessionPage() {
     socket.on('modeChanged', ({ mode }) => setMode(mode));
 
     socket.on('queueUpdated', ({ queue }) => setQueue(queue));
-    
+
     socket.on('textQuestionReceived', (q) => {
       setTextQuestions(prev => [...prev, q]);
     });
@@ -159,11 +161,11 @@ export default function PresenterSessionPage() {
       closeAll();
     });
 
-    return () => { 
-      socket.disconnect(); 
+    return () => {
+      socket.disconnect();
       closeAll();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user, navigate]);
 
   // Auto scroll transcript
@@ -179,7 +181,7 @@ export default function PresenterSessionPage() {
         if (success) setMicEnabled(true);
       };
       // Short delay ensures DOM/socket stabilization before triggering media requests
-      const timeout = setTimeout(enableAutoMic, 500); 
+      const timeout = setTimeout(enableAutoMic, 500);
       return () => clearTimeout(timeout);
     }
   }, [sessionStarted, micEnabled, initSelfMic]);
@@ -209,10 +211,10 @@ export default function PresenterSessionPage() {
     speakerName: user?.name || 'Presenter',
     speakerRole: 'presenter',
     onTranscriptSegment: (data) => {
-       if (socketRef.current) socketRef.current.emit('transcriptSegment', data);
+      if (socketRef.current) socketRef.current.emit('transcriptSegment', data);
     },
     onInterimTranscript: (data) => {
-       if (socketRef.current) socketRef.current.emit('interimTranscript', data);
+      if (socketRef.current) socketRef.current.emit('interimTranscript', data);
     }
   });
 
@@ -272,22 +274,22 @@ export default function PresenterSessionPage() {
       alert("Audio stream not ready. Please ensure your mic is enabled.");
       return;
     }
-    
+
     try {
       // Find a supported audio mime type
       const types = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/webm;codecs=opus'];
       const mimeType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-      
+
       const options = mimeType ? { mimeType } : {};
       const recorder = new MediaRecorder(stream, options);
       recordedChunksRef.current = [];
-      
+
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
           recordedChunksRef.current.push(e.data);
         }
       };
-      
+
       recorder.onstop = () => {
         const targetMime = mimeType || 'audio/webm';
         const blob = new Blob(recordedChunksRef.current, { type: targetMime });
@@ -300,7 +302,7 @@ export default function PresenterSessionPage() {
         a.click();
         URL.revokeObjectURL(url);
       };
-      
+
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
@@ -331,8 +333,8 @@ export default function PresenterSessionPage() {
   if (sessionStatus === 'ended') {
     return (
       <div className="min-h-screen bg-[#07090F] flex flex-col p-6 items-center justify-center relative overflow-hidden">
-        <div className="fixed inset-0 pointer-events-none opacity-30" style={{ backgroundImage:'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)', backgroundSize:'40px 40px' }}/>
-        
+        <div className="fixed inset-0 pointer-events-none opacity-30" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
+
         <div className="rounded-3xl p-8 w-full max-w-2xl border border-white/10 shadow-2xl bg-[#0D1220] relative z-10">
           <div className="text-center mb-6">
             <div className="text-5xl mb-4">📊</div>
@@ -341,14 +343,14 @@ export default function PresenterSessionPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
-             <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-               <div className="text-3xl font-black text-[#00D4FF] mb-1">{participants.length}</div>
-               <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Attendees</div>
-             </div>
-             <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-               <div className="text-3xl font-black text-[#00FF87] mb-1">{transcript.length}</div>
-               <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Transcript Entries</div>
-             </div>
+            <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+              <div className="text-3xl font-black text-[#00D4FF] mb-1">{participants.length}</div>
+              <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Attendees</div>
+            </div>
+            <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+              <div className="text-3xl font-black text-[#00FF87] mb-1">{transcript.length}</div>
+              <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Transcript Entries</div>
+            </div>
           </div>
 
           {finalSummary && (
@@ -378,7 +380,7 @@ export default function PresenterSessionPage() {
       <div className="fixed inset-0 pointer-events-none opacity-30" style={{
         backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)',
         backgroundSize: '40px 40px'
-      }}/>
+      }} />
 
       {/* ─── NAVBAR ─── */}
       <nav className="flex-shrink-0 border-b border-white/[0.06] z-50 relative" style={{ background: 'rgba(7,9,15,0.95)', backdropFilter: 'blur(20px)' }}>
@@ -387,17 +389,17 @@ export default function PresenterSessionPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-                style={{background:'linear-gradient(135deg,#00D4FF,#7C3AED)'}}>🎙</div>
+                style={{ background: 'linear-gradient(135deg,#00D4FF,#7C3AED)' }}>🎙</div>
               <span className="text-white font-black text-base tracking-tight">
-                M<span style={{color:'#00D4FF'}}>SCS</span>
+                M<span style={{ color: '#00D4FF' }}>SCS</span>
               </span>
             </div>
-            <div className="w-px h-5 bg-white/10"/>
+            <div className="w-px h-5 bg-white/10" />
             <div className="flex items-center gap-2">
               {sessionStarted && (
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"/>
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               )}
-              <span className="font-mono text-sm font-bold" style={{color:'#00D4FF'}}>
+              <span className="font-mono text-sm font-bold" style={{ color: '#00D4FF' }}>
                 {session?.sessionCode}
               </span>
               <span className="text-slate-600 text-xs">·</span>
@@ -408,7 +410,7 @@ export default function PresenterSessionPage() {
           {/* Center — Mode indicator */}
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"/>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               {mode === 'qa' ? 'Q&A Mode' : 'Speaking Mode'}
             </div>
           </div>
@@ -417,7 +419,7 @@ export default function PresenterSessionPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
               <span className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"/>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 {onlineParticipants.length} online
               </span>
               <span>·</span>
@@ -432,23 +434,22 @@ export default function PresenterSessionPage() {
             {sessionStarted && !isRecording && (
               <button onClick={handleStartRecording}
                 className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 border border-slate-500/20 hover:bg-white/10 transition-all flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-red-500"/> Record
+                <div className="w-2 h-2 rounded-full bg-red-500" /> Record
               </button>
             )}
             {sessionStarted && isRecording && (
               <button onClick={handleStopRecording}
                 className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 transition-all flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-sm bg-red-500 animate-pulse"/> Stop
+                <div className="w-2 h-2 rounded-sm bg-red-500 animate-pulse" /> Stop
               </button>
             )}
             {micEnabled && (
-              <button 
+              <button
                 onClick={toggleMute}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                  presenterMuted 
-                    ? 'bg-red-500/10 border-red-500/20 text-red-500' 
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${presenterMuted
+                    ? 'bg-red-500/10 border-red-500/20 text-red-500'
                     : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                }`}
+                  }`}
               >
                 {presenterMuted ? '🎤 Unmute' : '🔇 Mute'}
               </button>
@@ -469,7 +470,7 @@ export default function PresenterSessionPage() {
             <h2 className="text-3xl font-black text-white mb-2">{session?.title}</h2>
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="text-slate-500 text-sm font-medium">Session Code:</span>
-              <span className="font-mono font-black text-xl tracking-widest" style={{color:'#00D4FF'}}>
+              <span className="font-mono font-black text-xl tracking-widest" style={{ color: '#00D4FF' }}>
                 {session?.sessionCode}
               </span>
             </div>
@@ -488,7 +489,7 @@ export default function PresenterSessionPage() {
             )}
             <button onClick={handleStartSession}
               className="px-10 py-4 rounded-2xl font-black text-lg shadow-2xl shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95 mb-6"
-              style={{background:'linear-gradient(135deg,#00D4FF,#0099BB)',color:'#07090F'}}>
+              style={{ background: 'linear-gradient(135deg,#00D4FF,#0099BB)', color: '#07090F' }}>
               Start Session →
             </button>
             <p className="text-slate-600 text-xs mt-4 font-medium">
@@ -504,7 +505,7 @@ export default function PresenterSessionPage() {
 
           {/* ── LEFT — Controls ── */}
           <div className="w-64 flex-shrink-0 border-r border-white/[0.06] flex flex-col gap-3 p-4 overflow-y-auto"
-            style={{background:'rgba(255,255,255,0.01)'}}>
+            style={{ background: 'rgba(255,255,255,0.01)' }}>
 
             <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-1 mb-1">
               Session Controls
@@ -514,8 +515,8 @@ export default function PresenterSessionPage() {
             <button onClick={handleOpenQA} disabled={mode === 'qa'}
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl border font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               style={mode !== 'qa'
-                ? {background:'rgba(0,212,255,0.08)',borderColor:'rgba(0,212,255,0.25)',color:'#00D4FF'}
-                : {background:'rgba(255,255,255,0.03)',borderColor:'rgba(255,255,255,0.06)',color:'#4A5568'}
+                ? { background: 'rgba(0,212,255,0.08)', borderColor: 'rgba(0,212,255,0.25)', color: '#00D4FF' }
+                : { background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', color: '#4A5568' }
               }>
               <span className="text-lg">🔓</span>
               <div className="text-left">
@@ -528,8 +529,8 @@ export default function PresenterSessionPage() {
             <button onClick={handleNextQuestion} disabled={mode !== 'qa' || queue.length === 0}
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl border font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               style={mode === 'qa' && queue.length > 0
-                ? {background:'rgba(0,255,135,0.08)',borderColor:'rgba(0,255,135,0.25)',color:'#00FF87'}
-                : {background:'rgba(255,255,255,0.03)',borderColor:'rgba(255,255,255,0.06)',color:'#4A5568'}
+                ? { background: 'rgba(0,255,135,0.08)', borderColor: 'rgba(0,255,135,0.25)', color: '#00FF87' }
+                : { background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', color: '#4A5568' }
               }>
               <span className="text-lg">⏭</span>
               <div className="text-left">
@@ -542,8 +543,8 @@ export default function PresenterSessionPage() {
             <button onClick={handleInterrupt} disabled={!activeSpeaker}
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl border font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               style={activeSpeaker
-                ? {background:'rgba(255,140,0,0.08)',borderColor:'rgba(255,140,0,0.25)',color:'#FF8C00'}
-                : {background:'rgba(255,255,255,0.03)',borderColor:'rgba(255,255,255,0.06)',color:'#4A5568'}
+                ? { background: 'rgba(255,140,0,0.08)', borderColor: 'rgba(255,140,0,0.25)', color: '#FF8C00' }
+                : { background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', color: '#4A5568' }
               }>
               <span className="text-lg">✋</span>
               <div className="text-left">
@@ -556,8 +557,8 @@ export default function PresenterSessionPage() {
             <button onClick={handleCloseQA} disabled={mode !== 'qa'}
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl border font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               style={mode === 'qa'
-                ? {background:'rgba(124,58,237,0.08)',borderColor:'rgba(124,58,237,0.25)',color:'#A78BFA'}
-                : {background:'rgba(255,255,255,0.03)',borderColor:'rgba(255,255,255,0.06)',color:'#4A5568'}
+                ? { background: 'rgba(124,58,237,0.08)', borderColor: 'rgba(124,58,237,0.25)', color: '#A78BFA' }
+                : { background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', color: '#4A5568' }
               }>
               <span className="text-lg">🔒</span>
               <div className="text-left">
@@ -566,12 +567,12 @@ export default function PresenterSessionPage() {
               </div>
             </button>
 
-            <div className="my-1 border-t border-white/[0.06]"/>
+            <div className="my-1 border-t border-white/[0.06]" />
 
             {/* Emergency Stop */}
             <button onClick={handleEmergencyStop}
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl border font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{background:'rgba(255,59,92,0.08)',borderColor:'rgba(255,59,92,0.25)',color:'#FF3B5C'}}>
+              style={{ background: 'rgba(255,59,92,0.08)', borderColor: 'rgba(255,59,92,0.25)', color: '#FF3B5C' }}>
               <span className="text-lg">🚨</span>
               <div className="text-left">
                 <div>Emergency Stop</div>
@@ -582,39 +583,44 @@ export default function PresenterSessionPage() {
             {/* Session info */}
             <div className="mt-auto pt-4 border-t border-white/[0.06]">
               <div className="rounded-xl p-3 border border-white/[0.06]"
-                style={{background:'rgba(255,255,255,0.02)'}}>
+                style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 text-center">
                   Live QR Code
                 </div>
                 {dynamicQrToken ? (
-                  <div className="flex justify-center mb-2">
-                    <div className="p-2 rounded-xl border border-white/10 shadow-2xl bg-white">
-                      <QRCodeSVG 
-                        value={`${window.location.origin}/verify?token=${dynamicQrToken}`} 
-                        size={110} 
-                        level="H" 
-                        fgColor="#07090F"
+                  <div className="flex flex-col items-center mb-2">
+                    <div className="p-3 rounded-2xl border border-cyan-400/20 bg-[#07090F] group relative cursor-pointer"
+                      onClick={() => setShowQrModal(true)}>
+                      <QRCodeSVG
+                        value={`${window.location.origin}/verify?token=${dynamicQrToken}`}
+                        size={140}
+                        level="H"
+                        fgColor="#00D4FF"
+                        bgColor="transparent"
                         includeMargin={false}
                         imageSettings={{
                           src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E%F0%9F%8E%99%EF%B8%8F%3C/text%3E%3C/svg%3E",
                           x: undefined,
                           y: undefined,
-                          height: 24,
-                          width: 24,
+                          height: 28,
+                          width: 28,
                           excavate: true,
                         }}
                       />
+                      <div className="absolute inset-0 bg-cyan-400/0 group-hover:bg-cyan-400/5 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-2xl">
+                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest bg-[#07090F] px-2 py-1 rounded border border-cyan-400/30">Expand</span>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className="flex justify-center mb-2">
-                    <div className="w-24 h-24 rounded-lg bg-white/5 border border-white/10 animate-pulse flex items-center justify-center">
-                      <div className="w-4 h-4 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin"/>
+                    <div className="w-32 h-32 rounded-2xl bg-white/5 border border-white/10 animate-pulse flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
                     </div>
                   </div>
                 )}
                 <div className="font-mono font-black text-lg tracking-widest text-center mb-1"
-                  style={{color:'#00D4FF'}}>
+                  style={{ color: '#00D4FF' }}>
                   {session?.sessionCode}
                 </div>
                 <div className="text-[10px] text-slate-600 text-center">
@@ -630,10 +636,10 @@ export default function PresenterSessionPage() {
             {/* Headless Remote Transcriber for Student audio streams */}
             {activeSpeaker && remoteStream && (
               <>
-                <audio 
-                  autoPlay 
-                  playsInline 
-                  ref={el => { if (el && el.srcObject !== remoteStream) el.srcObject = remoteStream; }} 
+                <audio
+                  autoPlay
+                  playsInline
+                  ref={el => { if (el && el.srcObject !== remoteStream) el.srcObject = remoteStream; }}
                   style={{ display: 'none' }}
                 />
                 <RemoteTranscriber
@@ -660,13 +666,13 @@ export default function PresenterSessionPage() {
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 shadow-lg">
                   <span className="text-xl">{activeSpeaker ? '🗣️' : '🎙️'}</span>
                 </div>
-                
+
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${activeSpeaker ? 'bg-[#00FF87]' : 'bg-[#00D4FF]'}`} 
-                         style={{ boxShadow: `0 0 8px ${activeSpeaker ? '#00FF87' : '#00D4FF'}` }}/>
+                    <div className={`w-2 h-2 rounded-full animate-pulse ${activeSpeaker ? 'bg-[#00FF87]' : 'bg-[#00D4FF]'}`}
+                      style={{ boxShadow: `0 0 8px ${activeSpeaker ? '#00FF87' : '#00D4FF'}` }} />
                     <span className="text-xs font-black uppercase tracking-widest bg-clip-text text-transparent"
-                          style={{ backgroundImage: activeSpeaker ? 'linear-gradient(90deg, #00FF87, #34d399)' : 'linear-gradient(90deg, #00D4FF, #3b82f6)' }}>
+                      style={{ backgroundImage: activeSpeaker ? 'linear-gradient(90deg, #00FF87, #34d399)' : 'linear-gradient(90deg, #00D4FF, #3b82f6)' }}>
                       {activeSpeaker ? 'Student Speaking' : 'You Are Speaking'}
                     </span>
                   </div>
@@ -687,7 +693,7 @@ export default function PresenterSessionPage() {
                         background: activeSpeaker ? '#00FF87' : '#00D4FF',
                         animation: `wave 1s ease-in-out ${i * 0.1}s infinite alternate`,
                         boxShadow: `0 0 6px ${activeSpeaker ? 'rgba(0,255,135,0.4)' : 'rgba(0,212,255,0.4)'}`
-                      }}/>
+                      }} />
                   ))}
                 </div>
               </div>
@@ -710,7 +716,7 @@ export default function PresenterSessionPage() {
                     <div key={i} className="flex gap-3">
                       <div className="flex-shrink-0 w-20 pt-0.5">
                         <span className="text-[11px] font-bold"
-                          style={{color: t.speakerRole === 'presenter' ? '#00D4FF' : '#00FF87'}}>
+                          style={{ color: t.speakerRole === 'presenter' ? '#00D4FF' : '#00FF87' }}>
                           {t.speakerName}
                         </span>
                       </div>
@@ -719,7 +725,7 @@ export default function PresenterSessionPage() {
                       </div>
                       <div className="flex-shrink-0 pt-0.5">
                         <span className="text-[10px] text-slate-600 font-mono">
-                          {new Date(t.timestamp).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'})}
+                          {new Date(t.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
@@ -728,7 +734,7 @@ export default function PresenterSessionPage() {
                     <div key={`interim-${speakerName}`} className="flex gap-3 opacity-70">
                       <div className="flex-shrink-0 w-20 pt-0.5">
                         <span className="text-[11px] font-bold"
-                          style={{color: t.speakerRole === 'presenter' ? '#00D4FF' : '#00FF87'}}>
+                          style={{ color: t.speakerRole === 'presenter' ? '#00D4FF' : '#00FF87' }}>
                           {speakerName}
                         </span>
                       </div>
@@ -738,14 +744,14 @@ export default function PresenterSessionPage() {
                       <div className="flex-shrink-0 pt-0.5" />
                     </div>
                   ))}
-                  <div ref={transcriptEndRef}/>
+                  <div ref={transcriptEndRef} />
                 </div>
               )}
             </div>
 
             {/* Mode info bar */}
             <div className="flex-shrink-0 border-t border-white/[0.06] px-6 py-2 flex items-center justify-between"
-              style={{background:'rgba(255,255,255,0.01)'}}>
+              style={{ background: 'rgba(255,255,255,0.01)' }}>
               <div className="text-xs text-slate-600 font-medium">
                 {mode === 'qa'
                   ? '🟢 Q&A Mode active — participants can request to speak'
@@ -759,7 +765,7 @@ export default function PresenterSessionPage() {
 
           {/* ── RIGHT — Queue + Participants ── */}
           <div className="w-72 flex-shrink-0 border-l border-white/[0.06] flex flex-col overflow-hidden"
-            style={{background:'rgba(255,255,255,0.01)'}}>
+            style={{ background: 'rgba(255,255,255,0.01)' }}>
 
             {/* Queue */}
             <div className="flex-shrink-0 p-4 border-b border-white/[0.06]">
@@ -838,10 +844,10 @@ export default function PresenterSessionPage() {
               ) : (
                 <div className="space-y-2">
                   {textQuestions.map((q, i) => (
-                    <div key={i} className="p-3 rounded-lg" style={{background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)'}}>
+                    <div key={i} className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-bold text-emerald-400">{q.participantName}</span>
-                        <span className="text-[9px] text-slate-600">{new Date(q.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                        <span className="text-[9px] text-slate-600">{new Date(q.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <p className="text-xs text-slate-300">{q.text}</p>
                     </div>
@@ -873,9 +879,9 @@ export default function PresenterSessionPage() {
                   {participants.map((p) => (
                     <div key={p._id}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all"
-                      style={{background:'rgba(255,255,255,0.02)'}}>
+                      style={{ background: 'rgba(255,255,255,0.02)' }}>
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${p.isOnline ? 'bg-emerald-400' : 'bg-slate-600'}`}
-                        style={p.isOnline ? {boxShadow:'0 0 6px #34d399'} : {}}/>
+                        style={p.isOnline ? { boxShadow: '0 0 6px #34d399' } : {}} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white text-xs font-semibold truncate">{p.name}</div>
                       </div>
@@ -897,6 +903,61 @@ export default function PresenterSessionPage() {
           50% { transform: scaleY(1); opacity: 1; }
         }
       `}</style>
+      {/* ── QR MODAL (Premium Overlay) ── */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 sm:p-10">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-[#07090F]/95 backdrop-blur-md"
+            onClick={() => setShowQrModal(false)} />
+
+          {/* Modal Card */}
+          <div className="relative z-10 w-full max-w-2xl bg-[#0D1220] border border-cyan-400/20 rounded-[3rem] p-12 shadow-[0_0_100px_rgba(0,212,255,0.15)] flex flex-col items-center text-center">
+            <button className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"
+              onClick={() => setShowQrModal(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="mb-8">
+              <h2 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">Join Seminar</h2>
+              <p className="text-slate-400 text-lg">Scan to verify presence and join session</p>
+            </div>
+
+            <div className="p-10 rounded-[3rem] bg-[#07090F] border border-cyan-400/30 shadow-[0_0_50px_rgba(0,212,255,0.2)] mb-10">
+              {dynamicQrToken ? (
+                <QRCodeSVG
+                  value={`${window.location.origin}/verify?token=${dynamicQrToken}`}
+                  size={400}
+                  level="H"
+                  fgColor="#00D4FF"
+                  bgColor="transparent"
+                  includeMargin={false}
+                  imageSettings={{
+                    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E%F0%9F%8E%99%EF%B8%8F%3C/text%3E%3C/svg%3E",
+                    x: undefined,
+                    y: undefined,
+                    height: 64,
+                    width: 64,
+                    excavate: true,
+                  }}
+                />
+              ) : (
+                <div className="w-64 h-64 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="text-slate-500 text-sm font-bold uppercase tracking-[0.3em] mb-4">Manual Entry Code</div>
+              <div className="px-10 py-5 rounded-2xl bg-cyan-400/5 border border-cyan-400/20 text-cyan-400 font-mono text-5xl font-black tracking-[0.2em] shadow-[inset_0_0_20px_rgba(0,212,255,0.05)]">
+                {session?.sessionCode}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
