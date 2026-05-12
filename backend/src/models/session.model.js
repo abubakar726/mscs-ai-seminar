@@ -66,7 +66,9 @@ const sessionSchema = new mongoose.Schema(
       }
     ],
     currentQrToken: { type: String },
-    qrTokenExpiresAt: { type: Date }
+    qrTokenExpiresAt: { type: Date },
+    previousQrToken: { type: String },
+    previousQrTokenExpiresAt: { type: Date }
   },
   { timestamps: true }
 );

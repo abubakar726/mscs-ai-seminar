@@ -3,6 +3,9 @@ const { generateSessionCode, generateQRCode } = require('../utils/session.util')
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
+// 15 seconds validity window
+const QR_VALIDITY_MS = 15000;
+
 // POST /api/sessions/create
 const createSession = async (req, res) => {
   try {
@@ -122,9 +125,15 @@ const generateQrToken = async (req, res) => {
     const session = await Session.findOne({ _id: req.params.id, presenterId: req.user._id });
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
+    // Move current token to previous (Sliding Window / Grace Period)
+    if (session.currentQrToken) {
+      session.previousQrToken = session.currentQrToken;
+      session.previousQrTokenExpiresAt = session.qrTokenExpiresAt;
+    }
+
     const token = crypto.randomBytes(16).toString('hex');
     session.currentQrToken = token;
-    session.qrTokenExpiresAt = new Date(Date.now() + 15000); // 15 seconds validity
+    session.qrTokenExpiresAt = new Date(Date.now() + QR_VALIDITY_MS);
     await session.save();
 
     res.json({ token });
@@ -139,12 +148,23 @@ const verifyQrToken = async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ message: 'Token required' });
 
-    const session = await Session.findOne({ currentQrToken: token });
+    // Check both current and previous tokens (Grace Period)
+    const session = await Session.findOne({
+      $or: [
+        { currentQrToken: token },
+        { previousQrToken: token }
+      ]
+    });
+
     if (!session) {
       return res.status(401).json({ message: 'Invalid QR code' });
     }
 
-    if (new Date() > session.qrTokenExpiresAt) {
+    // Determine which token matched and check its expiry
+    const isCurrent = session.currentQrToken === token;
+    const expiry = isCurrent ? session.qrTokenExpiresAt : session.previousQrTokenExpiresAt;
+
+    if (new Date() > expiry) {
       return res.status(401).json({ message: 'QR code expired. Please scan the latest one.' });
     }
 
